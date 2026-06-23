@@ -700,7 +700,7 @@ export default function App() {
             <CheckSquare size={20} />
             <div className="text-center sm:text-left">
               <span>
-                {viewMode === 'owner' ? 'Minhas Faltantes' : 'Tenho para Dar'}
+                {viewMode === 'owner' ? 'Minhas Faltantes' : 'Tenho para Trocar'}
               </span>
             </div>
           </button>
