@@ -16,8 +16,7 @@ import {
   Link as LinkIcon,
   Trash2,
   Check,
-  Globe,
-} from 'lucide-react';
+  } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import {
@@ -236,7 +235,6 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [clientOrderStep, setClientOrderStep] = useState(1);
   const [removeModalData, setRemoveModalData] = useState(null);
-  const [showDeploymentInfo, setShowDeploymentInfo] = useState(false);
   const [ownerCopied, setOwnerCopied] = useState(false);
   const [showSuccessOwner, setShowSuccessOwner] = useState(false);
 
@@ -737,24 +735,7 @@ export default function App() {
         {/* ABA: PEDIDOS */}
         {activeTab === 'orders' && viewMode === 'owner' && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            <div className="bg-indigo-50 border-l-4 border-indigo-500 p-6 rounded-r-xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h2 className="text-xl font-bold text-indigo-900 mb-1">
-                  Como compartilhar na vida real?
-                </h2>
-                <p className="text-indigo-700">
-                  Como estamos num ambiente de testes, para que seus amigos
-                  acessem por um link público, o código deste projeto precisará
-                  ser hospedado num servidor.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowDeploymentInfo(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-colors whitespace-nowrap"
-              >
-                <Globe size={20} /> Publicar Aplicativo
-              </button>
-            </div>
+
 
             <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
               <Inbox className="text-indigo-600" /> Pedidos Recebidos
@@ -1253,55 +1234,7 @@ export default function App() {
       )}
 
       {/* --- MODAL INFORMATIVO SOBRE A PUBLICAÇÃO (COMPARTILHAMENTO) --- */}
-      {showDeploymentInfo && viewMode === 'owner' && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
-            <div className="bg-indigo-600 p-4 flex justify-between items-center text-white">
-              <h2 className="font-bold text-lg flex items-center gap-2">
-                <Globe size={20} /> Como Compartilhar?
-              </h2>
-              <button
-                onClick={() => setShowDeploymentInfo(false)}
-                className="p-1 hover:bg-indigo-500 rounded-lg transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
 
-            <div className="p-6 bg-slate-50 text-slate-700">
-              <p className="mb-4">
-                Como criamos esse projeto em um ambiente de testes fechado e
-                seguro, ainda não existe um link de internet (www) válido para
-                que seus amigos abram no celular deles.
-              </p>
-              <p className="mb-4 font-bold text-indigo-800">
-                Para tornar seu aplicativo público:
-              </p>
-              <ol className="list-decimal pl-5 space-y-2 mb-4 text-sm">
-                <li>Copie todo o código gerado no editor ao lado.</li>
-                <li>
-                  Publique-o em serviços de hospedagem gratuitos como{' '}
-                  <strong>Vercel</strong>, <strong>Netlify</strong> ou{' '}
-                  <strong>Firebase Hosting</strong>.
-                </li>
-                <li>
-                  Lá sim você receberá um link real para compartilhar no seu
-                  grupo do WhatsApp!
-                </li>
-              </ol>
-            </div>
-
-            <div className="p-4 border-t border-slate-200 bg-white">
-              <button
-                onClick={() => setShowDeploymentInfo(false)}
-                className="w-full flex justify-center py-3 px-4 rounded-xl font-bold bg-slate-200 hover:bg-slate-300 text-slate-800 transition-colors"
-              >
-                Entendi
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
