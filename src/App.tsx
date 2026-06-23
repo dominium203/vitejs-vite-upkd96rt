@@ -46,7 +46,7 @@ const db = getFirestore(app);
 const appId = 'app-central-trocas-copa';
 
 // --- DADOS INICIAIS ---
-const initialMissingData = [
+const initialDuplicateData = [
   { id: 'fwc', name: 'FWC 🏆', stickers: [3, 4, 5, 6, 8, 11, 14, 17, 19] },
   { id: 'coca', name: 'Coca-Cola 🥤', stickers: [6, 10, 13, 14] },
   { id: 'mex', name: 'México 🇲🇽', stickers: [1, 2, 3, 10, 11, 18, 19] },
@@ -175,7 +175,7 @@ const initialMissingData = [
   },
 ];
 
-const initialDuplicateData = [
+const initialMissingData = [
   { id: 'cro', name: 'Croácia 🇭🇷', stickers: [3, 6, 7, 8, 15, 19] },
   { id: 'cod', name: 'RD Congo 🇨🇩', stickers: [7, 8, 9, 20, 20] },
   { id: 'col', name: 'Colômbia 🇨🇴', stickers: [4, 4, 12] },
