@@ -253,8 +253,16 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, (usr) => {
       setUser(usr);
       if (usr) {
-        setViewMode('owner');
-        setActiveStoreId(usr.uid);
+        const urlParams = new URLSearchParams(window.location.search);
+        const storeIdDaUrl = urlParams.get('loja');
+
+        if (storeIdDaUrl) {
+          setViewMode('client');
+          setActiveStoreId(storeIdDaUrl);
+        } else {
+          setViewMode('owner');
+          setActiveStoreId(usr.uid);
+        }
       }
     });
 
@@ -593,31 +601,22 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-36">
       {/* Cabeçalho */}
       <header className="bg-slate-900 text-white shadow-lg">
-        {/* Controle de Visão Simulada */}
-        <div className="bg-blue-600 px-4 py-2 text-sm font-medium flex justify-between items-center">
-          <span>
-            Você está vendo como:{' '}
-            <strong>
-              {viewMode === 'owner' ? 'Dono da Loja' : 'Cliente (Simulação)'}
-            </strong>
-          </span>
-          <button
-            onClick={() => {
-              setViewMode(viewMode === 'owner' ? 'client' : 'owner');
-              setSelectedWants({});
-              setSelectedHaves({});
-              setActiveTab('offer');
-            }}
-            className="bg-blue-800 hover:bg-blue-900 px-3 py-1 rounded transition-colors flex items-center gap-2"
-          >
-            {viewMode === 'owner' ? (
-              <UserCircle size={16} />
-            ) : (
-              <Store size={16} />
-            )}
-            Trocar Visão
-          </button>
-        </div>
+{/* Controle de Visão e Compartilhamento */}
+{viewMode === 'owner' && (
+          <div className="bg-blue-600 px-4 py-2 text-sm font-medium flex justify-between items-center flex-wrap gap-2">
+            <span>Painel de Gerenciamento: <strong>Dono da Loja</strong></span>
+            <button 
+              onClick={() => {
+                const linkCliente = `${window.location.origin}/?loja=${user.uid}`;
+                navigator.clipboard.writeText(`Fala! Troca figurinhas da Copa comigo? Escolhe as que você quer no meu app: ${linkCliente}`);
+                alert('Mensagem com link copiada! Pode colar no seu WhatsApp.');
+              }}
+              className="bg-blue-800 hover:bg-blue-900 px-3 py-1 rounded transition-colors flex items-center gap-2 shadow-sm"
+            >
+              <LinkIcon size={16} /> Copiar Link para Amigos
+            </button>
+          </div>
+        )}
 
         <div className="max-w-7xl mx-auto px-4 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex justify-between items-start w-full md:w-auto">
