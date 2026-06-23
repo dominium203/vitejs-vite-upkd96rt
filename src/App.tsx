@@ -177,25 +177,25 @@ const initialMissingData = [
 
 const initialDuplicateData = [
   { id: 'cro', name: 'Croácia 🇭🇷', stickers: [3, 6, 7, 8, 15, 19] },
-  { id: 'cod', name: 'RD Congo 🇨🇩', stickers: [7, 9, 20, 20] },
+  { id: 'cod', name: 'RD Congo 🇨🇩', stickers: [7, 8, 9, 20, 20] },
   { id: 'col', name: 'Colômbia 🇨🇴', stickers: [4, 4, 12] },
   { id: 'por', name: 'Portugal 🇵🇹', stickers: [12] },
-  { id: 'jor', name: 'Jordânia 🇯🇴', stickers: [7, 18] },
-  { id: 'tun', name: 'Tunísia 🇹🇳', stickers: [1, 11] },
+  { id: 'jor', name: 'Jordânia 🇯🇴', stickers: [6, 7, 9, 10, 11, 15, 18] },
+  { id: 'tun', name: 'Tunísia 🇹🇳', stickers: [1, 3, 10, 11] },
   { id: 'pan', name: 'Panamá 🇵🇦', stickers: [4, 7] },
   { id: 'eng', name: 'Inglaterra 🏴󠁧󠁢󠁥󠁮󠁧󠁿', stickers: [6, 6] },
   { id: 'uzb', name: 'Uzbequistão 🇺🇿', stickers: [17, 18] },
-  { id: 'arg', name: 'Argentina 🇦🇷', stickers: [6, 10] },
-  { id: 'aut', name: 'Áustria 🇦🇹', stickers: [10, 13, 20] },
+  { id: 'arg', name: 'Argentina 🇦🇷', stickers: [6, 10, 16] },
+  { id: 'aut', name: 'Áustria 🇦🇹', stickers: [3, 10, 11, 12, 13, 20] },
   { id: 'uru', name: 'Uruguai 🇺🇾', stickers: [20, 20] },
   { id: 'fra', name: 'França 🇫🇷', stickers: [4] },
   { id: 'cpv', name: 'Cabo Verde 🇨🇻', stickers: [3, 7, 20] },
   { id: 'alg', name: 'Argélia 🇩🇿', stickers: [16] },
-  { id: 'sen', name: 'Senegal 🇸🇳', stickers: [3, 5, 6, 6, 16] },
+  { id: 'sen', name: 'Senegal 🇸🇳', stickers: [3, 5, 6, 6, 7, 16, 20] },
   { id: 'nzl', name: 'Nova Zelândia 🇳🇿', stickers: [7, 11] },
   { id: 'esp', name: 'Espanha 🇪🇸', stickers: [20] },
   { id: 'bel', name: 'Bélgica 🇧🇪', stickers: [11] },
-  { id: 'egy', name: 'Egito 🇪🇬', stickers: [2] },
+  { id: 'egy', name: 'Egito 🇪🇬', stickers: [2, 16] },
   { id: 'irn', name: 'Irã 🇮🇷', stickers: [3] },
   { id: 'jpn', name: 'Japão 🇯🇵', stickers: [12] },
   { id: 'swe', name: 'Suécia 🇸🇪', stickers: [10, 16] },
@@ -1079,7 +1079,7 @@ export default function App() {
 
                   <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-blue-800 text-sm">
                     <strong>Passo 1 de 2:</strong> Primeiro, vamos salvar seu
-                    pedido no sistema da loja. No próximo passo, você enviará a
+                    pedido no sistema. No próximo passo, você enviará a
                     mensagem pelo WhatsApp.
                   </div>
                 </div>
