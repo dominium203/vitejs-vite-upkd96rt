@@ -18,8 +18,8 @@ import {
   Check,
   Plus,
   } from 'lucide-react';
-  import { initializeApp } from 'firebase/app';
-  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+    import { initializeApp } from 'firebase/app';
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInAnonymously, signOut } from 'firebase/auth';
 import {
   getFirestore,
   doc,
@@ -244,27 +244,30 @@ export default function App() {
   const [newStickerNumber, setNewStickerNumber] = useState('');
   const googleProvider = new GoogleAuthProvider();
 
-  // Inicializa a Autenticação e Banco de Dados
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const storeIdDaUrl = urlParams.get('loja');
+// Inicializa a Autenticação e Banco de Dados
+useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const storeIdDaUrl = urlParams.get('loja');
 
-    if (storeIdDaUrl) {
-      setViewMode('client');
-      setActiveStoreId(storeIdDaUrl);
-    } else {
-      setViewMode('owner');
+  if (storeIdDaUrl) {
+    setViewMode('client');
+    setActiveStoreId(storeIdDaUrl);
+    signInAnonymously(auth).catch(console.error); // Autentica cliente para permitir o salvamento
+  } else {
+    setViewMode('owner');
+  }
+
+  const unsubscribe = onAuthStateChanged(auth, (usr) => {
+    setUser(usr);
+    if (usr && !usr.isAnonymous && !storeIdDaUrl) {
+      setActiveStoreId(usr.uid); // Dono acessando via Google
+    } else if (usr && usr.isAnonymous && !storeIdDaUrl) {
+      signOut(auth); // Remove a sessão anônima antiga do cache
     }
+  });
 
-    const unsubscribe = onAuthStateChanged(auth, (usr) => {
-      setUser(usr);
-      if (usr && !storeIdDaUrl) {
-        setActiveStoreId(usr.uid);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+  return () => unsubscribe();
+}, []);
 
   const loginWithGoogle = async () => {
     try {
@@ -276,19 +279,31 @@ export default function App() {
 
   const handleAddSticker = async () => {
     if (!newStickerCountry || !newStickerNumber || !inventory) return;
-    
+
     const newInventory = { ...inventory };
-    const sectionIndex = newInventory.duplicateData.findIndex(s => s.id === newStickerCountry);
-    
-    if (sectionIndex !== -1) {
-      const num = parseInt(newStickerNumber, 10);
+    let sectionIndex = newInventory.duplicateData.findIndex(s => s.id === newStickerCountry);
+
+    // Se o país ainda não existir na lista de repetidas, busca da lista mestre
+    if (sectionIndex === -1) {
+      const countryInfo = initialMissingData.find(c => c.id === newStickerCountry);
+      if (countryInfo) {
+        newInventory.duplicateData.push({ id: countryInfo.id, name: countryInfo.name, stickers: [] });
+        sectionIndex = newInventory.duplicateData.length - 1;
+      } else {
+        return;
+      }
+    }
+
+    const num = parseInt(newStickerNumber, 10);
+    // Evita adicionar exatamente a mesma figurinha duplicada duas vezes
+    if (!newInventory.duplicateData[sectionIndex].stickers.includes(num)) {
       newInventory.duplicateData[sectionIndex].stickers.push(num);
       newInventory.duplicateData[sectionIndex].stickers.sort((a, b) => a - b);
-      
-      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventories', user.uid), newInventory);
-      setNewStickerNumber('');
-      alert('Figurinha adicionada com sucesso!');
     }
+
+    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventories', user.uid), newInventory);
+    setNewStickerNumber('');
+    alert('Figurinha adicionada com sucesso!');
   };
 
 
@@ -600,7 +615,7 @@ export default function App() {
     }, 2500);
   };
 
-  if (viewMode === 'owner' && !user) {
+  if (viewMode === 'owner' && (!user || user.isAnonymous)) {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white p-4 text-center">
         <UserCircle size={64} className="text-blue-500 mb-6" />
@@ -876,7 +891,7 @@ export default function App() {
                   <label className="block text-sm font-bold text-slate-700 mb-1">País / Seção</label>
                   <select value={newStickerCountry} onChange={(e) => setNewStickerCountry(e.target.value)} className="w-full p-2 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="">Selecione...</option>
-                    {inventory.duplicateData.map(sec => (
+                    {initialMissingData.map(sec => (
                       <option key={sec.id} value={sec.id}>{sec.name}</option>
                     ))}
                   </select>
