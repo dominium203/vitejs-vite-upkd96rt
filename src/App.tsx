@@ -19,7 +19,7 @@ import {
   Plus,
   } from 'lucide-react';
     import { initializeApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInAnonymously, signOut } from 'firebase/auth';
+    import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, signInAnonymously, signOut } from 'firebase/auth';
 import {
   getFirestore,
   doc,
@@ -269,12 +269,12 @@ useEffect(() => {
   return () => unsubscribe();
 }, []);
 
-  const loginWithGoogle = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-      console.error('Erro no login:', error);
-    }
+const loginWithGoogle = async () => {
+  try {
+  await signInWithRedirect(auth, googleProvider);
+  } catch (error) {
+  console.error('Erro no login:', error);
+  }
   };
 
   const handleAddSticker = async () => {
