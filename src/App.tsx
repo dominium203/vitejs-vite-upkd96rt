@@ -19,7 +19,7 @@ import {
   Plus,
   } from 'lucide-react';
     import { initializeApp } from 'firebase/app';
-    import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, signInAnonymously, signOut } from 'firebase/auth';
+    import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signInAnonymously, signOut } from 'firebase/auth';
 import {
   getFirestore,
   doc,
@@ -248,15 +248,14 @@ export default function App() {
 useEffect(() => {
   const urlParams = new URLSearchParams(window.location.search);
   const storeIdDaUrl = urlParams.get('loja');
-
   if (storeIdDaUrl) {
     setViewMode('client');
     setActiveStoreId(storeIdDaUrl);
     signInAnonymously(auth).catch(console.error); // Autentica cliente para permitir o salvamento
   } else {
     setViewMode('owner');
+    getRedirectResult(auth).catch(console.error); // Processa o retorno do login do Google
   }
-
   const unsubscribe = onAuthStateChanged(auth, (usr) => {
     setUser(usr);
     if (usr && !usr.isAnonymous && !storeIdDaUrl) {
@@ -265,7 +264,6 @@ useEffect(() => {
       signOut(auth); // Remove a sessão anônima antiga do cache
     }
   });
-
   return () => unsubscribe();
 }, []);
 
