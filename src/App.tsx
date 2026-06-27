@@ -251,22 +251,19 @@ useEffect(() => {
   if (storeIdDaUrl) {
     setViewMode('client');
     setActiveStoreId(storeIdDaUrl);
-    signInAnonymously(auth).catch(console.error); // Autentica cliente para permitir o salvamento
+    signInAnonymously(auth).catch(console.error);
   } else {
     setViewMode('owner');
-    getRedirectResult(auth).catch(console.error); // Processa o retorno do login do Google
+    getRedirectResult(auth).catch(console.error);
   }
   const unsubscribe = onAuthStateChanged(auth, (usr) => {
     setUser(usr);
     if (usr && !usr.isAnonymous && !storeIdDaUrl) {
-      setActiveStoreId(usr.uid); // Dono acessando via Google
-    } else if (usr && usr.isAnonymous && !storeIdDaUrl) {
-      signOut(auth); // Remove a sessão anônima antiga do cache
+      setActiveStoreId(usr.uid);
     }
   });
   return () => unsubscribe();
 }, []);
-
 const loginWithGoogle = async () => {
   try {
   await signInWithRedirect(auth, googleProvider);
