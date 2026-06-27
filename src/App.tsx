@@ -16,9 +16,10 @@ import {
   Link as LinkIcon,
   Trash2,
   Check,
+  Plus,
   } from 'lucide-react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+  import { initializeApp } from 'firebase/app';
+  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import {
   getFirestore,
   doc,
@@ -238,36 +239,58 @@ export default function App() {
   const [ownerCopied, setOwnerCopied] = useState(false);
   const [showSuccessOwner, setShowSuccessOwner] = useState(false);
 
+  // Controles de Estado do Formulário
+  const [newStickerCountry, setNewStickerCountry] = useState('');
+  const [newStickerNumber, setNewStickerNumber] = useState('');
+  const googleProvider = new GoogleAuthProvider();
+
   // Inicializa a Autenticação e Banco de Dados
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        await signInAnonymously(auth);
-      } catch (error) {
-        console.error('Erro na autenticação:', error);
-      }
-    };
+    const urlParams = new URLSearchParams(window.location.search);
+    const storeIdDaUrl = urlParams.get('loja');
 
-    initAuth();
+    if (storeIdDaUrl) {
+      setViewMode('client');
+      setActiveStoreId(storeIdDaUrl);
+    } else {
+      setViewMode('owner');
+    }
 
     const unsubscribe = onAuthStateChanged(auth, (usr) => {
       setUser(usr);
-      if (usr) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const storeIdDaUrl = urlParams.get('loja');
-
-        if (storeIdDaUrl) {
-          setViewMode('client');
-          setActiveStoreId(storeIdDaUrl);
-        } else {
-          setViewMode('owner');
-          setActiveStoreId(usr.uid);
-        }
+      if (usr && !storeIdDaUrl) {
+        setActiveStoreId(usr.uid);
       }
     });
 
     return () => unsubscribe();
   }, []);
+
+  const loginWithGoogle = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error('Erro no login:', error);
+    }
+  };
+
+  const handleAddSticker = async () => {
+    if (!newStickerCountry || !newStickerNumber || !inventory) return;
+    
+    const newInventory = { ...inventory };
+    const sectionIndex = newInventory.duplicateData.findIndex(s => s.id === newStickerCountry);
+    
+    if (sectionIndex !== -1) {
+      const num = parseInt(newStickerNumber, 10);
+      newInventory.duplicateData[sectionIndex].stickers.push(num);
+      newInventory.duplicateData[sectionIndex].stickers.sort((a, b) => a - b);
+      
+      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventories', user.uid), newInventory);
+      setNewStickerNumber('');
+      alert('Figurinha adicionada com sucesso!');
+    }
+  };
+
 
   useEffect(() => {
     if (!activeStoreId) return;
@@ -577,17 +600,28 @@ export default function App() {
     }, 2500);
   };
 
-  if (!user || !inventory) {
+  if (viewMode === 'owner' && !user) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white">
-        <ArrowRightLeft
-          size={48}
-          className="text-blue-500 animate-pulse mb-4"
-        />
-        <h2 className="text-xl font-bold">Conectando ao servidor...</h2>
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white p-4 text-center">
+        <UserCircle size={64} className="text-blue-500 mb-6" />
+        <h2 className="text-2xl font-bold mb-2">Acesso do Proprietário</h2>
+        <p className="text-slate-400 mb-8 max-w-md">Faça login com sua conta Google para gerenciar seu estoque e pedidos de qualquer dispositivo.</p>
+        <button onClick={loginWithGoogle} className="bg-white text-slate-900 font-bold py-3 px-6 rounded-xl flex items-center gap-3 hover:bg-slate-100 transition-colors">
+          <UserCircle size={24} className="text-blue-600"/> Entrar com o Google
+        </button>
       </div>
     );
   }
+
+  if (!inventory) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white">
+        <ArrowRightLeft size={48} className="text-blue-500 animate-pulse mb-4" />
+        <h2 className="text-xl font-bold">Carregando estoque...</h2>
+      </div>
+    );
+  }  
+  
 
   const clientNameStr = customerName.trim() || 'Amigo Anônimo';
   const whatsappUrlLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(
@@ -836,6 +870,26 @@ export default function App() {
                 <p>
                   Estoque de repetidas atualizado. Para simular offline, clique
                   em uma figurinha para removê-la manualmente.
+                  {viewMode === 'owner' && (
+              <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-3 items-end">
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-sm font-bold text-slate-700 mb-1">País / Seção</label>
+                  <select value={newStickerCountry} onChange={(e) => setNewStickerCountry(e.target.value)} className="w-full p-2 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="">Selecione...</option>
+                    {inventory.duplicateData.map(sec => (
+                      <option key={sec.id} value={sec.id}>{sec.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="w-32">
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Número</label>
+                  <input type="number" value={newStickerNumber} onChange={(e) => setNewStickerNumber(e.target.value)} className="w-full p-2 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: 10" />
+                </div>
+                <button onClick={handleAddSticker} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors h-[42px]">
+                  <Plus size={18} /> Adicionar
+                </button>
+              </div>
+            )}
                 </p>
               </div>
             ) : (
