@@ -18,8 +18,8 @@ import {
   Check,
   Plus,
   } from 'lucide-react';
-    import { initializeApp } from 'firebase/app';
-    import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signInAnonymously, signOut } from 'firebase/auth';
+  import { initializeApp } from 'firebase/app';
+  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInAnonymously, signOut } from 'firebase/auth';
 import {
   getFirestore,
   doc,
@@ -254,7 +254,6 @@ useEffect(() => {
     signInAnonymously(auth).catch(console.error);
   } else {
     setViewMode('owner');
-    getRedirectResult(auth).catch(console.error);
   }
   const unsubscribe = onAuthStateChanged(auth, (usr) => {
     setUser(usr);
@@ -264,13 +263,18 @@ useEffect(() => {
   });
   return () => unsubscribe();
 }, []);
+
 const loginWithGoogle = async () => {
   try {
-  await signInWithRedirect(auth, googleProvider);
+    if (user && user.isAnonymous) {
+      await signOut(auth);
+    }
+    await signInWithPopup(auth, googleProvider);
   } catch (error) {
-  console.error('Erro no login:', error);
+    console.error('Erro no login:', error);
+    alert('Erro ao fazer login. Tente novamente.');
   }
-  };
+};
 
   const handleAddSticker = async () => {
     if (!newStickerCountry || !newStickerNumber || !inventory) return;
