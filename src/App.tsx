@@ -351,7 +351,7 @@ const loginWithGoogle = async () => {
   }, [activeStoreId, viewMode, user]);
 
   useEffect(() => {
-    if (!user || viewMode !== 'owner') return;
+    if (!activeStoreId) return;
 
     const unsub = onSnapshot(
       collection(db, 'artifacts', appId, 'public', 'data', 'orders'),
@@ -359,7 +359,7 @@ const loginWithGoogle = async () => {
         const fetchedOrders = [];
         snapshot.forEach((d) => {
           const data = d.data();
-          if (data.storeId === user.uid) {
+          if (data.storeId === activeStoreId) {
             fetchedOrders.push({ id: d.id, ...data });
           }
         });
@@ -370,7 +370,7 @@ const loginWithGoogle = async () => {
     );
 
     return () => unsub();
-  }, [user, viewMode]);
+  }, [activeStoreId]);
 
   const totalWants = Object.keys(selectedWants).length;
   const totalHaves = Object.keys(selectedHaves).length;
@@ -395,19 +395,39 @@ const loginWithGoogle = async () => {
     });
   };
 
+  const reservedWantsKeys = useMemo(() => {
+    const keys = new Set();
+    orders.forEach(order => Object.keys(order.wants || {}).forEach(k => keys.add(k)));
+    return keys;
+  }, [orders]);
+
+  const reservedHavesKeys = useMemo(() => {
+    const keys = new Set();
+    orders.forEach(order => Object.keys(order.haves || {}).forEach(k => keys.add(k)));
+    return keys;
+  }, [orders]);
+
   const filteredOfferData = useMemo(() => {
     if (!inventory) return [];
     return inventory.duplicateData
+      .map(section => ({
+        ...section,
+        stickers: section.stickers.filter((sticker, index) => !reservedWantsKeys.has(`${section.id}-${sticker}-${index}`))
+      }))
       .filter((s) => s.stickers.length > 0)
       .filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [inventory, searchTerm]);
+  }, [inventory, searchTerm, reservedWantsKeys]);
 
   const filteredNeedData = useMemo(() => {
     if (!inventory) return [];
     return inventory.missingData
+      .map(section => ({
+        ...section,
+        stickers: section.stickers.filter(sticker => !reservedHavesKeys.has(`${section.id}-${sticker}`))
+      }))
       .filter((s) => s.stickers.length > 0)
       .filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [inventory, searchTerm]);
+  }, [inventory, searchTerm, reservedHavesKeys]);
 
   // --- FUNÇÕES DE TEXTO E MENSAGENS ---
   const generateTradeMessage = (name) => {
@@ -520,6 +540,24 @@ const loginWithGoogle = async () => {
     await deleteDoc(
       doc(db, 'artifacts', appId, 'public', 'data', 'orders', orderId)
     );
+  };
+
+  const removeItemFromOrder = async (orderId, type, itemKey) => {
+    const orderToEdit = orders.find(o => o.id === orderId);
+    if (!orderToEdit) return;
+    const newData = { ...orderToEdit[type] };
+    delete newData[itemKey];
+    
+    const otherType = type === 'wants' ? 'haves' : 'wants';
+    if (Object.keys(newData).length === 0 && Object.keys(orderToEdit[otherType] || {}).length === 0) {
+      await rejectOrder(orderId);
+    } else {
+      await setDoc(
+        doc(db, 'artifacts', appId, 'public', 'data', 'orders', orderId),
+        { [type]: newData },
+        { merge: true }
+      );
+    }
   };
 
   const manualRemoveSticker = async () => {
@@ -635,8 +673,17 @@ const loginWithGoogle = async () => {
       </div>
     );
   }  
-  
 
+  const totalDuplicateCount = inventory.duplicateData.reduce((acc, curr) => {
+    const available = curr.stickers.filter((s, i) => !reservedWantsKeys.has(`${curr.id}-${s}-${i}`));
+    return acc + available.length;
+  }, 0);
+
+  const totalMissingCount = inventory.missingData.reduce((acc, curr) => {
+    const available = curr.stickers.filter((s) => !reservedHavesKeys.has(`${curr.id}-${s}`));
+    return acc + available.length;
+  }, 0);
+  
   const clientNameStr = customerName.trim() || 'Amigo Anônimo';
   const whatsappUrlLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(
     generateTradeMessage(clientNameStr)
@@ -731,8 +778,7 @@ const loginWithGoogle = async () => {
             <Gift size={20} />
             <div className="text-center sm:text-left">
               <span>
-                {viewMode === 'owner' ? 'Minhas Repetidas' : 'Quero Receber'}
-              </span>
+              {viewMode === 'owner' ? `Minhas Repetidas (${totalDuplicateCount})` : 'Quero Receber'}              </span>
             </div>
           </button>
 
@@ -747,8 +793,8 @@ const loginWithGoogle = async () => {
             <CheckSquare size={20} />
             <div className="text-center sm:text-left">
               <span>
-                {viewMode === 'owner' ? 'Minhas Faltantes' : 'Tenho para Trocar'}
-              </span>
+              {viewMode === 'owner' ? `Minhas Faltantes (${totalMissingCount})` : 'Tenho para Trocar'} 
+                           </span>
             </div>
           </button>
 
@@ -824,12 +870,15 @@ const loginWithGoogle = async () => {
                             ELE QUER (Suas Repetidas):
                           </p>
                           <div className="flex flex-wrap gap-1">
-                            {Object.values(order.wants).map((item, i) => (
+                          {Object.entries(order.wants).map(([key, item]) => (
                               <span
-                                key={i}
-                                className="bg-white border border-blue-200 text-blue-700 text-xs px-2 py-1 rounded-md font-medium"
+                                key={key}
+                                className="bg-white border border-blue-200 text-blue-700 text-xs px-2 py-1 flex items-center gap-1 rounded-md font-medium"
                               >
                                 {item.sectionName} {item.stickerNumber}
+                                <button onClick={() => removeItemFromOrder(order.id, 'wants', key)} className="text-red-500 hover:text-red-700" title="Remover item">
+                                  <X size={12} />
+                                </button>
                               </span>
                             ))}
                           </div>
@@ -842,12 +891,15 @@ const loginWithGoogle = async () => {
                             ELE OFERECE (Suas Faltantes):
                           </p>
                           <div className="flex flex-wrap gap-1">
-                            {Object.values(order.haves).map((item, i) => (
+                          {Object.entries(order.haves).map(([key, item]) => (
                               <span
-                                key={i}
-                                className="bg-white border border-emerald-200 text-emerald-700 text-xs px-2 py-1 rounded-md font-medium"
+                                key={key}
+                                className="bg-white border border-emerald-200 text-emerald-700 text-xs px-2 py-1 flex items-center gap-1 rounded-md font-medium"
                               >
                                 {item.sectionName} {item.stickerNumber}
+                                <button onClick={() => removeItemFromOrder(order.id, 'haves', key)} className="text-red-500 hover:text-red-700" title="Remover item">
+                                  <X size={12} />
+                                </button>
                               </span>
                             ))}
                           </div>
