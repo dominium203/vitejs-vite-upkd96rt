@@ -294,11 +294,9 @@ const loginWithGoogle = async () => {
     }
 
     const num = parseInt(newStickerNumber, 10);
-    // Evita adicionar exatamente a mesma figurinha duplicada duas vezes
-    if (!newInventory.duplicateData[sectionIndex].stickers.includes(num)) {
-      newInventory.duplicateData[sectionIndex].stickers.push(num);
-      newInventory.duplicateData[sectionIndex].stickers.sort((a, b) => a - b);
-    }
+    // Permite adicionar a mesma figurinha múltiplas vezes (estoque real)
+    newInventory.duplicateData[sectionIndex].stickers.push(num);
+    newInventory.duplicateData[sectionIndex].stickers.sort((a, b) => a - b);
 
     await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventories', user.uid), newInventory);
     setNewStickerNumber('');
