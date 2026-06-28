@@ -276,32 +276,31 @@ const loginWithGoogle = async () => {
   }
 };
 
-  const handleAddSticker = async () => {
-    if (!newStickerCountry || !newStickerNumber || !inventory) return;
-
-    const newInventory = { ...inventory };
-    let sectionIndex = newInventory.duplicateData.findIndex(s => s.id === newStickerCountry);
-
-    // Se o país ainda não existir na lista de repetidas, busca da lista mestre
-    if (sectionIndex === -1) {
-      const countryInfo = initialMissingData.find(c => c.id === newStickerCountry);
-      if (countryInfo) {
-        newInventory.duplicateData.push({ id: countryInfo.id, name: countryInfo.name, stickers: [] });
-        sectionIndex = newInventory.duplicateData.length - 1;
-      } else {
-        return;
-      }
+const handleAddSticker = async () => {
+  if (!newStickerCountry || !newStickerNumber || !inventory) return;
+  const newInventory = { ...inventory };
+  const listType = activeTab === 'offer' ? 'duplicateData' : 'missingData';
+  let sectionIndex = newInventory[listType].findIndex(s => s.id === newStickerCountry);
+  
+  // Se o país ainda não existir na lista atual, busca da lista mestre
+  if (sectionIndex === -1) {
+    const countryInfo = initialMissingData.find(c => c.id === newStickerCountry);
+    if (countryInfo) {
+      newInventory[listType].push({ id: countryInfo.id, name: countryInfo.name, stickers: [] });
+      sectionIndex = newInventory[listType].length - 1;
+    } else {
+      return;
     }
-
-    const num = parseInt(newStickerNumber, 10);
-    // Permite adicionar a mesma figurinha múltiplas vezes (estoque real)
-    newInventory.duplicateData[sectionIndex].stickers.push(num);
-    newInventory.duplicateData[sectionIndex].stickers.sort((a, b) => a - b);
-
-    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventories', user.uid), newInventory);
-    setNewStickerNumber('');
-    alert('Figurinha adicionada com sucesso!');
-  };
+  }
+  
+  const num = parseInt(newStickerNumber, 10);
+  newInventory[listType][sectionIndex].stickers.push(num);
+  newInventory[listType][sectionIndex].stickers.sort((a, b) => a - b);
+  
+  await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'inventories', user.uid), newInventory);
+  setNewStickerNumber('');
+  alert('Figurinha adicionada com sucesso!');
+};
 
 
   useEffect(() => {
@@ -1039,12 +1038,30 @@ const loginWithGoogle = async () => {
         {/* ABA: PRECISO */}
         {activeTab === 'need' && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            {viewMode === 'owner' ? (
+{viewMode === 'owner' ? (
               <div className="bg-slate-100 border border-slate-300 p-4 rounded-xl text-slate-600">
-                <p>
+                <p className="mb-4">
                   Estoque de faltantes atualizado. Se conseguir uma offline,
                   clique nela para removê-la manualmente da lista.
                 </p>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-end">
+                  <div className="flex-1 min-w-[200px]">
+                    <label className="block text-sm font-bold text-slate-700 mb-1">País / Seção</label>
+                    <select value={newStickerCountry} onChange={(e) => setNewStickerCountry(e.target.value)} className="w-full p-2 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none">
+                      <option value="">Selecione...</option>
+                      {initialMissingData.map(sec => (
+                        <option key={sec.id} value={sec.id}>{sec.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="w-32">
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Número</label>
+                    <input type="number" value={newStickerNumber} onChange={(e) => setNewStickerNumber(e.target.value)} className="w-full p-2 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: 10" />
+                  </div>
+                  <button onClick={handleAddSticker} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors h-[42px]">
+                    <Plus size={18} /> Adicionar
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg shadow-sm">
