@@ -412,7 +412,12 @@ const handleAddSticker = async () => {
         stickers: section.stickers.filter((sticker, index) => !reservedWantsKeys.has(`${section.id}-${sticker}-${index}`))
       }))
       .filter((s) => s.stickers.length > 0)
-      .filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      .filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => {
+        const indexA = initialMissingData.findIndex(c => c.id === a.id);
+        const indexB = initialMissingData.findIndex(c => c.id === b.id);
+        return indexA - indexB;
+      });
   }, [inventory, searchTerm, reservedWantsKeys]);
 
   const filteredNeedData = useMemo(() => {
@@ -423,7 +428,12 @@ const handleAddSticker = async () => {
         stickers: section.stickers.filter(sticker => !reservedHavesKeys.has(`${section.id}-${sticker}`))
       }))
       .filter((s) => s.stickers.length > 0)
-      .filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      .filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => {
+        const indexA = initialMissingData.findIndex(c => c.id === a.id);
+        const indexB = initialMissingData.findIndex(c => c.id === b.id);
+        return indexA - indexB;
+      });
   }, [inventory, searchTerm, reservedHavesKeys]);
 
   // --- FUNÇÕES DE TEXTO E MENSAGENS ---
