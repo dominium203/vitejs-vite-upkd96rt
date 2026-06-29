@@ -482,10 +482,12 @@ const handleAddSticker = async () => {
     if (Object.keys(newData).length === 0 && Object.keys(orderToEdit[otherType] || {}).length === 0) {
       await rejectOrder(orderId);
     } else {
+      const updatedOrder = { ...orderToEdit, [type]: newData };
+      delete updatedOrder.id; 
+      
       await setDoc(
         doc(db, 'artifacts', appId, 'public', 'data', 'orders', orderId),
-        { [type]: newData },
-        { merge: true }
+        updatedOrder
       );
     }
   };
