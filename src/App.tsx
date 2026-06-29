@@ -433,7 +433,7 @@ const handleAddSticker = async () => {
     }, 300);
   };
 
-  // --- FUNÇÕES DO DONO DA LOJA ---
+  // --- FUNÇÕES DO DONO DA LOJA ----
   const approveOrder = async (order) => {
     if (!inventory) return;
 
